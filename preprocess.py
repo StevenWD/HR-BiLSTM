@@ -116,7 +116,7 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
     relation_all_feature_neg = list()
     label = list()
     neg_number = list()
-    
+
     for one_data in data:
         gold_relation = one_data[0]
         neg_relation = one_data[1]
@@ -168,7 +168,7 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
                         one_relation_feature[index] = relation_dict[word]
 
                 one_relation_all_feature = np.zeros(config.getint('pre', 'relation_word_maximum_length'))
-                one_relation_all_word = relation_all[one_relation-1]
+                one_relation_all_word = relation_all[one_relation]
                 for index in range(min(config.getint('pre', 'relation_word_maximum_length'), len(one_relation_all_word))):
                     word = one_relation_all_word[index]
                     if relation_all_dict.get(word, -1) == -1:
@@ -181,20 +181,21 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
     json.dump(neg_number, open('./neg_number.json', 'w'), indent=4)
     return question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label
 
-def process_one(question, relation, relation_all):
-    question_dict = json.load(open('./question_dict.json', 'r'))
-    relation_dict = json.load(open('./relation_dict.json', 'r'))
-    relation_all_dict = json.load(open('./relation_all_dict.json', 'r'))
+def process_one(question, relation):
+    question_dict = json.load(open('/home/stevenwd/HR-LSTM/question_dict.json', 'r'))
+    relation_dict = json.load(open('/home/stevenwd/HR-LSTM/relation_dict.json', 'r'))
+    relation_all_dict = json.load(open('/home/stevenwd/HR-LSTM/relation_all_dict.json', 'r'))
 
-    question_feature = np.zeros(config.getint('pre', 'question_maximum_length'))
-    for index in range(min(config.getint('pre', 'question_maximum_length'), len(question))):
-        word = question[index]
+    question_feature = [0] * config.getint('pre', 'question_maximum_length')
+    question_word = question.split(' ')
+    for index in range(min(config.getint('pre', 'question_maximum_length'), len(question_word))):
+        word = question_word[index]
         if question_dict.get(word, -1) == -1:
             question_feature[index] = question_dict['#UNK#']
         else:
             question_feature[index] = question_dict[word]
 
-    relation_feature = np.zeros(config.getint('pre', 'relation_maximum_length'))
+    relation_feature = [0] * config.getint('pre', 'relation_maximum_length')
     relation_word = relation.split('.') 
     for index in range(min(config.getint('pre', 'relation_maximum_length'), len(relation_word))):
         word = relation_word[index]
@@ -203,7 +204,7 @@ def process_one(question, relation, relation_all):
         else:
             relation_feature[index] = relation_dict[word]
 
-    relation_all_feature = np.zeros(config.getint('pre', 'relation_word_maximum_length'))
+    relation_all_feature = [0] * config.getint('pre', 'relation_word_maximum_length')
     relation_all_word = []
     for r in relation_word:
         for rr in r.split('_'):
@@ -215,6 +216,7 @@ def process_one(question, relation, relation_all):
         else:
             relation_all_feature[index] = relation_all_dict[word]
 
+    # print(relation_feature)
     return question_feature, relation_feature, relation_all_feature
 
 def dump(prefix, question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label):
