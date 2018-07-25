@@ -60,6 +60,8 @@ def relationStat(relation):
     return word_dict
 
 def gloveEmbedding(embedding_filepath):
+    glove_dict = dict()
+    glove_emd_matrix = list()
     all_word_embedding = dict()
     with open(embedding_filepath) as fin:
         for line in tqdm(fin):
@@ -70,7 +72,16 @@ def gloveEmbedding(embedding_filepath):
                 key = seg_res[0]
                 value = [float(word) for word in seg_res[1:]]
                 all_word_embedding[key] = value
-    return all_word_embedding
+    # return all_word_embedding
+    glove_dict['#UNK#'] = len(glove_dict)
+    for word in all_word_embedding:
+        glove_dict[word] = len(glove_dict)
+
+    glove_emd_matrix.append(np.random.normal(size=(300, )).tolist())
+    for word in all_word_embedding:
+        glove_emd_matrix.append(all_word_embedding[word])
+
+    return glove_dict, all_word_embedding, glove_emd_matrix
 
 
 def questionEmbedding(question_words, all_word_embedding):
@@ -230,24 +241,28 @@ def dump(prefix, question_feature, relation_feature, relation_all_feature, relat
 
 if __name__ == '__main__':
     print('Embedding...')
-    all_word_embedding = gloveEmbedding(config.get('pre', 'embedding_filepath'))
+    glove_dict, glove_embedding, glove_emd_matrix = gloveEmbedding(config.get('pre', 'embedding_filepath'))
     print('Relations....')
     relation, relation_all = readRelation(config.get('pre', 'relation_filepath'))
     relation_dict = relationStat(relation)
     json.dump(relation_dict, open('relation_dict.json', 'w'))
-    relation_all_dict = relationStat(relation_all)
+    # relation_all_dict = relationStat(relation_all)
+    relation_all_dict = glove_dict
     json.dump(relation_all_dict, open('relation_all_dict.json', 'w'))
-    relation_emd_matrix = relationEmbedding(relation_dict, all_word_embedding)
-    relation_all_emd_matrix = relationEmbedding(relation_all_dict, all_word_embedding)
+    relation_emd_matrix = relationEmbedding(relation_dict, glove_embedding)
+    # relation_all_emd_matrix = relationEmbedding(relation_all_dict, all_word_embedding)
+    relation_all_emd_matrix = glove_emd_matrix
 
     np.save('relation_emd_matrix.npy', relation_emd_matrix)
     np.save('relation_all_emd_matrix.npy', relation_all_emd_matrix)
 
     print('Data...')
     data = readData(config.get('pre', 'train_filepath'))
-    question_dict = questionStat(data)
+    # question_dict = questionStat(data)
+    question_dict = glove_dict
     json.dump(question_dict, open('question_dict.json', 'w'))
-    question_emd_matrix = questionEmbedding(question_dict, all_word_embedding)
+    # question_emd_matrix = questionEmbedding(question_dict, all_word_embedding)
+    question_emd_matrix = glove_emd_matrix
     np.save('question_emd_matrix.npy', question_emd_matrix)
     question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label = process(data, relation, relation_all, question_dict, relation_dict, relation_all_dict)
     dump('train_', question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label)
