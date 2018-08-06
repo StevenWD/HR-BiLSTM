@@ -25,7 +25,7 @@ python3 model.py
 Evaluate model with test file.
 
 ```python
-python3 model_eval.py
+python3 eval.py
 ```
 
 
