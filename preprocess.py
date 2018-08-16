@@ -15,7 +15,8 @@ def readData(filepath):
             one_data = line.strip('\n').split('\t')
 
             gold_relation = [int(num)-1 for num in one_data[0].split() if num.strip()]
-            neg_relation = [int(num)-1 for num in one_data[1].split() if num.strip()]
+            # neg_relation = [int(num)-1 for num in one_data[1].split() if num.strip()]
+            neg_relation = [int(num)-1 for num in one_data[1].split() if num.strip() and int(num)-1 not in gold_relation]
             question = one_data[2].split()
             data.append([gold_relation, neg_relation, question])
 
@@ -39,6 +40,7 @@ def readRelation(filepath):
 def questionStat(data):
     word_dict = dict()
     word_dict['#UNK#'] = len(word_dict)
+    word_dict['<e>'] = len(word_dict)
 
     for one_data in data:
         question = one_data[2]
@@ -128,7 +130,7 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
     label = list()
     neg_number = list()
 
-    for one_data in data:
+    for test_index,one_data in enumerate(data):
         gold_relation = one_data[0]
         neg_relation = one_data[1]
         question = one_data[2]
@@ -142,7 +144,7 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
                 one_question_feature[index] = question_dict[word]
 
         for one_relation in gold_relation:
-            neg_number.append(len(neg_relation))
+            neg_number.append((len(neg_relation),test_index))
             one_relation_feature = np.zeros(config.getint('pre', 'relation_maximum_length'))
             one_relation_word = relation[one_relation]
             for index in range(min(config.getint('pre', 'relation_maximum_length'), len(one_relation_word))):
@@ -192,11 +194,12 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
     json.dump(neg_number, open('./neg_number.json', 'w'), indent=4)
     return question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label
 
-def process_one(question, relation):
-    question_dict = json.load(open('/home/stevenwd/HR-LSTM/question_dict.json', 'r'))
-    relation_dict = json.load(open('/home/stevenwd/HR-LSTM/relation_dict.json', 'r'))
-    relation_all_dict = json.load(open('/home/stevenwd/HR-LSTM/relation_all_dict.json', 'r'))
 
+question_dict = json.load(open('/home/stevenwd/HR-BiLSTM/question_dict.json', 'r'))
+relation_dict = json.load(open('/home/stevenwd/HR-BiLSTM/relation_dict.json', 'r'))
+relation_all_dict = json.load(open('/home/stevenwd/HR-BiLSTM/relation_all_dict.json', 'r'))
+
+def process_one(question, relation):
     question_feature = [0] * config.getint('pre', 'question_maximum_length')
     question_word = question.split(' ')
     for index in range(min(config.getint('pre', 'question_maximum_length'), len(question_word))):
@@ -258,11 +261,11 @@ if __name__ == '__main__':
 
     print('Data...')
     data = readData(config.get('pre', 'train_filepath'))
-    # question_dict = questionStat(data)
-    question_dict = glove_dict
+    question_dict = questionStat(data)
+    # question_dict = glove_dict
     json.dump(question_dict, open('question_dict.json', 'w'))
-    # question_emd_matrix = questionEmbedding(question_dict, all_word_embedding)
-    question_emd_matrix = glove_emd_matrix
+    question_emd_matrix = questionEmbedding(question_dict, all_word_embedding)
+    # question_emd_matrix = glove_emd_matrix
     np.save('question_emd_matrix.npy', question_emd_matrix)
     question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label = process(data, relation, relation_all, question_dict, relation_dict, relation_all_dict)
     dump('train_', question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label)
