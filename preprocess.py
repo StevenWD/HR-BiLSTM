@@ -195,11 +195,10 @@ def process(data, relation, relation_all, question_dict, relation_dict, relation
     return question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label
 
 
-question_dict = json.load(open('/home/stevenwd/HR-BiLSTM/question_dict.json', 'r'))
-relation_dict = json.load(open('/home/stevenwd/HR-BiLSTM/relation_dict.json', 'r'))
-relation_all_dict = json.load(open('/home/stevenwd/HR-BiLSTM/relation_all_dict.json', 'r'))
-
 def process_one(question, relation):
+    question_dict = json.load(open('/home/stevenwd/HR-BiLSTM/question_dict.json', 'r'))
+    relation_dict = json.load(open('/home/stevenwd/HR-BiLSTM/relation_dict.json', 'r'))
+    relation_all_dict = json.load(open('/home/stevenwd/HR-BiLSTM/relation_all_dict.json', 'r'))
     question_feature = [0] * config.getint('pre', 'question_maximum_length')
     question_word = question.split(' ')
     for index in range(min(config.getint('pre', 'question_maximum_length'), len(question_word))):
@@ -264,7 +263,7 @@ if __name__ == '__main__':
     question_dict = questionStat(data)
     # question_dict = glove_dict
     json.dump(question_dict, open('question_dict.json', 'w'))
-    question_emd_matrix = questionEmbedding(question_dict, all_word_embedding)
+    question_emd_matrix = questionEmbedding(question_dict, glove_embedding)
     # question_emd_matrix = glove_emd_matrix
     np.save('question_emd_matrix.npy', question_emd_matrix)
     question_feature, relation_feature, relation_all_feature, relation_feature_neg, relation_all_feature_neg, label = process(data, relation, relation_all, question_dict, relation_dict, relation_all_dict)
